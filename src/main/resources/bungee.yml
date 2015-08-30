@@ -1,0 +1,4 @@
+name: LoginSync
+main: net.thelightmc.loginsync.LoginSync
+version: 1.0
+author: TheLightMC
