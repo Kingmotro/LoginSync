@@ -1,7 +1,9 @@
 package net.thelightmc.loginsync.listeners;
 
+import net.md_5.bungee.api.ServerPing;
 import net.md_5.bungee.api.event.LoginEvent;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
+import net.md_5.bungee.api.event.ProxyPingEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.event.EventHandler;
@@ -35,14 +37,21 @@ public class PlayerListener implements Listener {
                 event.completeIntent(loginSync);
                 return;
             }
-            jedis.sadd("loggedIn",uniqueId.toString());
+            jedis.sadd("loggedIn", uniqueId.toString());
             event.completeIntent(loginSync);
         });
     }
 
     @EventHandler
+    public void onProxyPing(ProxyPingEvent event) {
+        event.registerIntent(loginSync);
+        ServerPing.Players players = event.getResponse().getPlayers();
+        loginSync.getProxy().getScheduler().runAsync(loginSync, () -> players.setOnline(jedisPool.getResource().scard("loggedIn").intValue()));
+    }
+
+    @EventHandler
     public void onPlayerQuit(PlayerDisconnectEvent event) {
         loginSync.getProxy().getScheduler().runAsync(loginSync, () -> jedisPool.getResource()
-                .srem("loggedIn", event.getPlayer().getUniqueId().toString()));
+                        .srem("loggedIn", event.getPlayer().getUniqueId().toString()));
     }
 }
